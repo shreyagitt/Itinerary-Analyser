@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Itinerary Analyser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f6f5f1; --card: #ffffff; --ink: #1c1b19; --muted: #6b6860; --line: #e6e3db;
+    --accent: #0f766e; --accent-soft: #e3f2ef;
+    --good: #15803d; --ok: #b45309; --bad: #b91c1c;
+    --good-soft: #e7f5ec; --ok-soft: #fdf3e2; --bad-soft: #fde8e8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.5; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 16px 64px; }
+  header h1 { font-size: clamp(28px, 5vw, 44px); margin: 0 0 8px; letter-spacing: -0.02em; }
+  header p { color: var(--muted); margin: 0 0 28px; font-size: 17px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+
+  .drop { border: 2px dashed #c9c5ba; border-radius: 16px; padding: 44px 20px; text-align: center; cursor: pointer; transition: .15s; background: var(--card); }
+  .drop.over, .drop:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .drop strong { font-size: 18px; display: block; margin-bottom: 4px; }
+  .drop span { color: var(--muted); font-size: 14px; }
+  .file-name { margin-top: 14px; font-weight: 600; color: var(--accent); }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 10px; padding: 14px 28px; font: 600 16px Inter, sans-serif; cursor: pointer; margin-top: 18px; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .error { background: var(--bad-soft); color: var(--bad); padding: 12px 16px; border-radius: 10px; margin-top: 14px; }
+
+  .loading { text-align: center; padding: 48px 20px; }
+  .spinner { width: 44px; height: 44px; border: 4px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading .step { color: var(--muted); }
+
+  .hero { display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: center; }
+  .ring { position: relative; width: 180px; height: 180px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring .num b { font-size: 52px; line-height: 1; letter-spacing: -0.03em; }
+  .ring .num small { color: var(--muted); font-size: 14px; }
+  .verdict { font-size: 22px; font-weight: 700; margin: 0 0 8px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-size: 14px; color: var(--muted); }
+  .meta b { color: var(--ink); font-weight: 600; }
+
+  h2 { font-size: 18px; margin: 0 0 16px; }
+  .cat { padding: 14px 0; border-top: 1px solid var(--line); }
+  .cat:first-of-type { border-top: 0; padding-top: 0; }
+  .cat-head { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 6px; gap: 12px; }
+  .bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 99px; transition: width .8s ease; }
+  .cat p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .flag { padding: 12px 14px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid; }
+  .flag b { display: block; margin-bottom: 2px; }
+  .flag span { font-size: 14px; }
+  .flag.high { background: var(--bad-soft); border-color: var(--bad); }
+  .flag.medium { background: var(--ok-soft); border-color: var(--ok); }
+  .flag.low { background: #f1f0ec; border-color: #a8a49a; }
+  ul.clean { margin: 0; padding-left: 20px; }
+  ul.clean li { margin-bottom: 8px; font-size: 15px; }
+
+  .days { display: grid; gap: 8px; }
+  .day { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: start; padding: 10px 0; border-top: 1px solid var(--line); }
+  .day:first-child { border-top: 0; }
+  .day .d { font-weight: 700; color: var(--muted); }
+  .day .t { font-weight: 600; }
+  .day .n { font-size: 14px; color: var(--muted); }
+  .pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; text-transform: capitalize; }
+  .pill.light { background: var(--good-soft); color: var(--good); }
+  .pill.moderate { background: var(--ok-soft); color: var(--ok); }
+  .pill.heavy { background: var(--bad-soft); color: var(--bad); }
+  .again { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+  .hidden { display: none; }
+
+  @media (max-width: 720px) {
+    .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+    .meta { justify-content: center; }
+    .grid2 { grid-template-columns: 1fr; }
+    .day { grid-template-columns: 48px 1fr; }
+    .day .pill { grid-column: 2; justify-self: start; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Itinerary Analyser</h1>
+    <p>Upload your travel itinerary or package quote. Get an honest score out of 100, red flags, and what to ask your operator before you pay.</p>
+  </header>
+
+  <section id="uploader" class="card">
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept=".pdf,.docx,.txt,.md,image/*" hidden />
+      <strong>Drop your itinerary here or click to browse</strong>
+      <span>PDF, DOCX, TXT or screenshot · up to 30 MB</span>
+      <div class="file-name" id="fileName"></div>
+    </label>
+    <div style="text-align:center"><button id="go" disabled>Analyse itinerary</button></div>
+    <div class="error hidden" id="error"></div>
+  </section>
+
+  <section id="loading" class="card loading hidden">
+    <div class="spinner"></div>
+    <div><b>Analysing your itinerary…</b></div>
+    <div class="step" id="step">Reading the document</div>
+  </section>
+
+  <section id="result" class="hidden"></section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let file = null;
+
+function pick(f) {
+  file = f;
+  $("fileName").textContent = f ? f.name : "";
+  $("go").disabled = !f;
+  $("error").classList.add("hidden");
+}
+$("file").addEventListener("change", (e) => pick(e.target.files[0]));
+const drop = $("drop");
+["dragover", "dragenter"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => e.dataTransfer.files[0] && pick(e.dataTransfer.files[0]));
+
+const steps = ["Reading the document", "Checking route and drive times", "Checking season and safety", "Reviewing stays and inclusions", "Weighing price and policies", "Scoring"];
+let stepTimer;
+
+$("go").addEventListener("click", async () => {
+  if (!file) return;
+  $("uploader").classList.add("hidden");
+  $("loading").classList.remove("hidden");
+  let i = 0; $("step").textContent = steps[0];
+  stepTimer = setInterval(() => { i = Math.min(i + 1, steps.length - 1); $("step").textContent = steps[i]; }, 6000);
+
+  const fd = new FormData(); fd.append("file", file);
+  try {
+    const res = await fetch("/api/analyse", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Analysis failed");
+    render(data);
+  } catch (err) {
+    $("uploader").classList.remove("hidden");
+    $("error").textContent = err.message;
+    $("error").classList.remove("hidden");
+  } finally {
+    clearInterval(stepTimer);
+    $("loading").classList.add("hidden");
+  }
+});
+
+const tone = (pct) => pct >= 75 ? ["var(--good)", "var(--good-soft)", "Strong plan"] : pct >= 60 ? ["var(--ok)", "var(--ok-soft)", "Needs attention"] : ["var(--bad)", "var(--bad-soft)", "High risk"];
+
+function render(d) {
+  const [col, soft, label] = tone(d.score);
+  const C = 2 * Math.PI * 78;
+  const t = d.trip || {};
+  const meta = [["Destination", t.destination], ["Duration", t.duration], ["Dates", t.travel_dates], ["Travellers", t.travellers], ["Price", t.price], ["Operator", t.operator]]
+    .filter(([, v]) => v).map(([k, v]) => `<span>${k}: <b>${esc(v)}</b></span>`).join("");
+  const order = { high: 0, medium: 1, low: 2 };
+  const flags = [...(d.red_flags || [])].sort((a, b) => order[a.severity] - order[b.severity]);
+
+  $("result").innerHTML = `
+    <div class="card hero">
+      <div class="ring">
+        <svg width="180" height="180"><circle cx="90" cy="90" r="78" fill="none" stroke="var(--line)" stroke-width="14"/>
+          <circle id="arc" cx="90" cy="90" r="78" fill="none" stroke="${col}" stroke-width="14" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" style="transition:stroke-dashoffset 1.2s ease"/></svg>
+        <div class="num"><b>${d.score}</b><small>out of 100</small></div>
+      </div>
+      <div>
+        <span class="badge" style="background:${soft};color:${col}">${label}</span>
+        <p class="verdict">${esc(d.verdict)}</p>
+        <div style="color:var(--muted)">${esc(t.title)}</div>
+        <p style="margin:10px 0 0">${esc(d.summary)}</p>
+        <div class="meta">${meta}</div>
+        ${d.engine ? `<div class="meta" style="font-size:12px">Analysed by ${esc(d.engine)}</div>` : ""}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Score breakdown</h2>
+      ${d.categories.map((c) => { const p = (c.score / c.max) * 100; const [cc] = tone(p); return `
+        <div class="cat">
+          <div class="cat-head"><span>${esc(c.name)}</span><span style="color:${cc}">${c.score} / ${c.max}</span></div>
+          <div class="bar"><i style="width:0;background:${cc}" data-w="${p}"></i></div>
+          <p>${esc(c.reasoning)}</p>
+        </div>`; }).join("")}
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Red flags (${flags.length})</h2>
+        ${flags.map((f) => `<div class="flag ${f.severity}"><b>${esc(f.title)}</b><span>${esc(f.detail)}</span></div>`).join("") || "<p>No major issues found.</p>"}
+      </div>
+      <div>
+        <div class="card"><h2>What works well</h2><ul class="clean">${(d.strengths || []).map((s) => `<li>${esc(s)}</li>`).join("")}</ul></div>
+        <div class="card"><h2>Ask your operator</h2><ul class="clean">${(d.recommendations || []).map((s) => `<li>${esc(s)}</li>`).join("")}</ul></div>
+      </div>
+    </div>
+
+    ${(d.days || []).length ? `<div class="card"><h2>Day-by-day load</h2><div class="days">
+      ${d.days.map((x) => `<div class="day"><span class="d">Day ${esc(x.day)}</span><div><div class="t">${esc(x.title)}</div><div class="n">${esc(x.note)}</div></div><span class="pill ${esc(x.load)}">${esc(x.load)}</span></div>`).join("")}
+    </div></div>` : ""}
+
+    <div style="text-align:center"><button class="again" onclick="location.reload()">Analyse another itinerary</button></div>`;
+  $("result").classList.remove("hidden");
+  requestAnimationFrame(() => {
+    $("arc").style.strokeDashoffset = C * (1 - d.score / 100);
+    document.querySelectorAll(".bar i").forEach((b) => (b.style.width = b.dataset.w + "%"));
+  });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+</script>
+</body>
+</html>
