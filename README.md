@@ -191,36 +191,6 @@ Destinations not in the tables still get routes, day loads, prices and policy ch
 
 The scoring step itself takes about 0.1 s. Nearly all of the time is OCR, so a text PDF or Word file is much faster than a scan or a photo.
 
-## Limitations
-
-The engine uses heuristics, not understanding. Treat the score as a checklist that highlights questions to ask, not a final verdict.
-
-**Reading the document**
-- **OCR quality:** blurry scans, low-light photos, stylised brochure fonts and text over images can garble place names, prices and dates. Clear PDFs and Word files give the most accurate results.
-- **OCR speed:** image-only PDFs take about 3 s per page and photos about 8 s, versus about 1 s for text documents.
-- **English only:** OCR uses the English model, and all rules match English wording. Itineraries in other languages won't be parsed properly.
-- **Unusual layouts:** days are found from "Day N" headings, numbered lists, per-page headings, tables and simple prose ("the next day…"). Other layouts (e.g. multi-column brochures where OCR mixes columns, or plans with no day structure at all) show days as "Not clearly described" and are scored on general content only.
-- **Dates:** numeric dates are read as day/month (`05/06/2026` = 5 June). Without a labelled "Travel date" it uses the first date in the document, which may be a quote or validity date.
-- **Price:** it picks the largest per-person figure. Documents with several price options (e.g. standard vs deluxe, or different group sizes) are scored on the highest one. Currency conversion uses fixed approximate rates.
-
-**Rules and data**
-- **Seasonal warnings only cover known places:** about 300 places across India and popular international destinations. Other destinations get no seasonal check; the report says to check the local season.
-- **Southern hemisphere and microclimates:** climate is set per region, so local exceptions (e.g. rain-shadow valleys, or altitude differences within a region) aren't captured.
-- **Drive times:** they come from the document, a small built-in leg table, or a rough distance-based estimate. Road works, closures, traffic and border or permit stops aren't considered.
-- **Mixed-mode days:** a day that combines several modes (fly + drive + boat) is labelled by its main mode, so it may look lighter than it really is.
-- **Place names:** unknown places are picked up from capitalised words in day titles, so occasionally a non-place (e.g. an attraction name) is listed as a stop.
-- **Static data:** climate, distances, price bands and exchange rates are built-in approximations, not live data. Nothing checks real hotel quality, reviews, availability or the operator's reputation.
-
-**Scoring**
-- **Fixed rubric weights:** the 100-point weights and category bands are fixed. A short city break and a high-altitude road trip are scored with the same rubric.
-- **Absence ≠ problem:** many points depend on what the document *mentions*. A good trip with a short quote can score lower than a weaker trip with a detailed one.
-- **Not-an-itinerary check:** it relies on travel keywords, so very short or unusual documents may be wrongly rejected or accepted.
-
-**App**
-- **No accounts, history or saved reports:** each upload is analysed and then discarded.
-- **Upload limit:** 30 MB per file, one file at a time.
-- **Concurrency:** the OCR pool is shared, so several large scans uploaded at once queue behind each other.
-
 ## License
 
 [MIT](LICENSE)
